@@ -6,11 +6,16 @@
 /*   By: yothmani <yothmani@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/03/28 22:49:31 by yothmani          #+#    #+#             */
-/*   Updated: 2024/03/29 01:08:12 by yothmani         ###   ########.fr       */
+/*   Updated: 2024/03/31 00:49:52 by yothmani         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "../includes/cub3d.h"
+
+bool	is_white_space(char c)
+{
+	return (c == ' ' || (c >= 9 && c <= 13));
+}
 
 bool	is_char_valid(char **str)
 {
@@ -25,7 +30,8 @@ bool	is_char_valid(char **str)
 		y = 0;
 		while (str[x][y])
 		{
-			if (str[x][y] == '1' || str[x][y] == '0' || str[x][y] == 32)
+			if (str[x][y] == '1' || str[x][y] == '0'
+				|| is_white_space(str[x][y]))
 				y++;
 			else if (str[x][y] == 'N' || str[x][y] == 'S' || str[x][y] == 'E'
 				|| str[x][y] == 'W')
@@ -50,39 +56,56 @@ bool	is_char_valid(char **str)
 	return (true);
 }
 
-bool check_first_row(char **str)
+bool	is_map_closed(char **str)
 {
-	int	x;
-	int	y;
+	int	i;
+	int	j;
 
-	x = 0;
-	y = 0;
-	while (str[x] && str[x][y])
+	i = 0;
+	while (str[i])
 	{
-        y = 0;
-		while (str[x][y] == 32)
-			y++;
-		if (str[x][y] != '1')
+		j = 0;
+		while (str[i][j] && str[i][j] != '\n')
 		{
-			printf("Map is not closed!\n");
-			return false;
+			if ((i == 0 || !str[i + 1]) && (str[i][j] != '1'
+					&& !is_white_space(str[i][j])))
+			{
+				printf("Error at index [%d][%d]\n", i, j);
+				return (false);
+			}
+			if ((j == 0 || !str[i][j + 1]) && (str[i][j] != '1'
+					&& !is_white_space(str[i][j])))
+			{
+				printf("Error at index [%d][%d]\n", i, j);
+				return (false);
+			}
+			j++;
 		}
-        else
-            x++;
+		i++;
 	}
-    return true;
+	return (true);
 }
-
 
 int	main(void)
 {
-	char	*str[4];
+	char	*str[15];
 
-	str[0] = "          1  0  1  11111";
-	str[1] = "  01 0 111N01";
-	str[2] = "     1 011111";
-	str[3] = NULL;
-	if (is_char_valid(str) && check_first_row(str))
+	str[0] = "			1111111111111111111111111";
+	str[1] = "			1000000000110000000000001";
+	str[2] = "			1011000001110000000000001";
+	str[3] = "			1001000000000000000000001";
+	str[4] = "111111111011000001110000000000001";
+	str[5] = "100000000011000001110111111111111";
+	str[6] = "11110111111111011100000010001";
+	str[7] = "11110111111111011101010010001";
+	str[8] = "11000000110101011100000010001";
+	str[9] = "10000000000000001100000010001";
+	str[10] = "10000000000000001101010010001";
+	str[11] = "11000001110101011111011110N0111";
+	str[12] = "11110111 1110101 101111010001";
+	str[13] = "11111111 1111111 111111111111";
+	str[14] = NULL;
+	if (is_char_valid(str) && is_map_closed(str))
 		printf("Map is valid\n");
 	else
 		printf("Map is invalid\n");
