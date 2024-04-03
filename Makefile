@@ -3,10 +3,10 @@
 #                                                         :::      ::::::::    #
 #    Makefile                                           :+:      :+:    :+:    #
 #                                                     +:+ +:+         +:+      #
-#    By: yothmani <yothmani@student.42.fr>          +#+  +:+       +#+         #
+#    By: joe_jam <joe_jam@student.42.fr>            +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2024/03/28 22:33:53 by yothmani          #+#    #+#              #
-#    Updated: 2024/03/28 23:35:42 by yothmani         ###   ########.fr        #
+#    Updated: 2024/04/03 00:41:43 by joe_jam          ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -23,7 +23,7 @@ LIBFT_DIR       = lib/libft
 
 LIBS            = -I$(INC_DIR) -I$(LIBFT_DIR)
 
-SRC_FILES = parsing/map.c
+SRC_FILES = parsing/map.c parsing/main.c
 
 SRC = $(addprefix $(SRC_DIR)/, $(SRC_FILES))
 
