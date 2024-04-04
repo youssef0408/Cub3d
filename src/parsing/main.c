@@ -6,13 +6,13 @@
 /*   By: joe_jam <joe_jam@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/04/03 00:40:51 by joe_jam           #+#    #+#             */
-/*   Updated: 2024/04/03 02:24:28 by joe_jam          ###   ########.fr       */
+/*   Updated: 2024/04/04 02:45:03 by joe_jam          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "../includes/cub3d.h"
 
-int	main(void)
+int	main1(void)
 {
 	char	*str[15];
 
