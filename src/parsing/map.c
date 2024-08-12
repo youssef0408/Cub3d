@@ -3,138 +3,95 @@
 /*                                                        :::      ::::::::   */
 /*   map.c                                              :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: joe_jam <joe_jam@student.42.fr>            +#+  +:+       +#+        */
+/*   By: yothmani <yothmani@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/03/28 22:49:31 by yothmani          #+#    #+#             */
-/*   Updated: 2024/04/03 02:23:15 by joe_jam          ###   ########.fr       */
+/*   Updated: 2024/05/26 14:39:50 by yothmani         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "../includes/cub3d.h"
 
-bool	is_white_space(char c)
+void	init_map_struct(t_map *map, int fd)
 {
-	return (c == ' ' || (c >= 9 && c <= 13));
+	int	i;
+
+	map->grid = NULL;
+	map->height = 0;
+	map->width = 0;
+	map->fd = fd;
+	map->first_map_line = -1;
+	map->has_direction = false;
+	map->spawn_direction = 0;
+	map->spawn_x = -1;
+	map->spawn_y = -1;
+	map->textures = malloc(TEXTURE_COUNT * sizeof(mlx_texture_t *));
+	if (!map->textures)
+		return ;
+	i = 0;
+	while (i < TEXTURE_COUNT)
+		map->textures[i++] = NULL;
+	map->checked_element = (t_element_check){
+		.f_color = false,
+		.c_color = false,
+		.texture_no = false,
+		.texture_so = false,
+		.texture_we = false,
+		.texture_ea = false,
+	};
 }
 
-bool	is_char_valid(char **str)
+bool	is_char_valid(char **str, t_map *map)
 {
-	int	has_direction;
-	int	x;
-	int	y;
-
-	has_direction = 0;
-	x = 0;
-	while (str[x])
-	{
-		y = 0;
-		while (str[x][y])
-		{
-			if (str[x][y] == '1' || str[x][y] == '0'
-				|| is_white_space(str[x][y]))
-				y++;
-			else if (str[x][y] == 'N' || str[x][y] == 'S' || str[x][y] == 'E'
-				|| str[x][y] == 'W')
-			{
-				has_direction++;
-				y++;
-			}
-			else
-			{
-				printf("Invalid character [%c] was found in line [%d]\n", str[x][y], x);
-				return (false);
-			}
-		}
-		x++;
-	}
-	if (has_direction != 1)
-	{
-		printf("Only one start point is permitted! You have %d\n",
-			has_direction);
+	if (!validate_grid_characters(str, map))
 		return (false);
-	}
+	if (!handle_start_points(str, map))
+		return (false);
 	return (true);
 }
 
-int	line_check(char **str)
+int	colonne_check(char **str, t_map map)
 {
-	int	start;
-	int	end;
-	int	x;
-
-	start = 0;
-	end = strlen(str[0]);
-	x = 0;
-	while (is_white_space(str[x][start]))
-		start++;
-	while (is_white_space(str[x][end - 1]))
-		end--;
-	while (start < end)
-	{
-		if (str[x][start] != '1' && str[x][start] != ' ')
-		{
-			printf("first line has incorrect char [%c].\n", str[x][start]);
-			return (1);
-		}
-		start++;
-	}
-	while (str[x])
-		x++;
-	x--;
-	end = strlen(str[x]);
-	start = 0;
-	while (is_white_space(str[x][start]))
-		start++;
-	while (is_white_space(str[x][end - 1]))
-		end--;
-	while (start < end)
-	{
-		if (str[x][start] != '1' && str[x][start] != ' ')
-		{
-			printf("last line has incorrect char [%c].\n", str[x][start]);
-			return (1);
-		}
-		start++;
-	}
-	return (0);
-}
-
-int	colonne_check(char **str)
-{
-	int	x;
-	int	y;
+	unsigned int	x;
+	unsigned int	y;
+	int				end;
 
 	if (!str)
 		return (0);
 	x = 0;
-	while (str[x])
+	while (x < map.height)
 	{
 		y = 0;
 		while (is_white_space(str[x][y]))
 			y++;
-		if (str[x][y] != '1')
-		{
-			printf("col [%d] is not closed\n", x);
+		if (check_col_start(str, x, y))
 			return (1);
-		}
-		while (str[x][y])
-			y++;
-		y--;
-		while (y >= 0 && is_white_space(str[x][y]))
-			y--;
-		if (str[x][y] != '1')
-		{
-			printf("col [%d] is not closed\n", x);
+		end = map.width;
+		while (end > 0 && is_white_space(str[x][end - 1]))
+			end--;
+		if (check_col_end(str, x, end))
 			return (1);
-		}
 		x++;
 	}
 	return (0);
 }
 
-bool is_map_valid(char **str)
+int	first_and_last_line_check(char **str, t_map map)
 {
-	if(is_char_valid(str) && !line_check(str) && !colonne_check(str))
-		return(true);
-	return(false);
+	if (!str)
+		return (0);
+	if (check_first_and_last_line(str, map) != 0)
+		return (1);
+	return (0);
+}
+
+bool	is_map_valid(char **str, t_map *map)
+{
+	if (!is_char_valid(str, map))
+		return (false);
+	if (colonne_check(str, *map))
+		return (false);
+	if (first_and_last_line_check(str, *map))
+		return (false);
+	return (true);
 }

@@ -3,16 +3,14 @@
 /*                                                        :::      ::::::::   */
 /*   file.c                                             :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: joe_jam <joe_jam@student.42.fr>            +#+  +:+       +#+        */
+/*   By: yothmani <yothmani@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/04/04 01:01:57 by joe_jam           #+#    #+#             */
-/*   Updated: 2024/04/04 02:53:08 by joe_jam          ###   ########.fr       */
+/*   Updated: 2024/05/21 19:39:57 by yothmani         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "../includes/cub3d.h"
-
-//TODO:change the isdigit strlen strncmp ... by libft functions
 
 int	open_file(char *file_path)
 {
@@ -22,7 +20,7 @@ int	open_file(char *file_path)
 	if (fd < 0)
 	{
 		perror("Error opening file");
-		return (1);
+		return (-1);
 	}
 	return (fd);
 }
@@ -30,85 +28,90 @@ int	open_file(char *file_path)
 int	check_file_extension(char *file_name)
 {
 	int	i;
-	int	j;
+	int	dot_position;
 
+	dot_position = -1;
 	i = 0;
 	while (file_name[i] != '\0')
+	{
+		if (file_name[i] == '.')
+			dot_position = i;
 		i++;
-	i--;
-	while (i >= 0 && file_name[i] != '.')
-		i--;
-	if (i < 0 || strncmp(".cub", &file_name[i], 4) != 0)
-	{
-		printf("Error: Bad file extension\n");
-		return (1);
 	}
-	j = i + 4;
-	while (file_name[j] != '\0')
+	if (dot_position == -1 || dot_position == i - 1)
+		return (1);
+	if (i - dot_position != 4)
+		return (1);
+	if (ft_strncmp(".cub", &file_name[dot_position], 4))
+		return (1);
+	return (0);
+}
+
+int	full_element_check(t_map *map, char *current_line, int *line_counter,
+		int *grid_idx)
+{
+	int		fd;
+	char	color_pref;
+
+	fd = map->fd;
+	if (*current_line == 'F' || *current_line == 'C')
 	{
-		if (file_name[j] != ' ')
-		{
-			printf("Error: Bad file extension\n");
+		color_pref = *current_line;
+		if (full_color_check(map, current_line, fd, color_pref))
 			return (1);
-		}
-		j++;
+	}
+	else
+	{
+		if (full_tex_check(map, current_line, line_counter, grid_idx))
+			return (1);
 	}
 	return (0);
 }
 
-bool	is_valid_tex_prefix(char *tex_pref)
+int	handle_empty_line(char **current_line, int *line_counter, t_map *map,
+		int *grid_idx)
 {
-	if ((tex_pref[0] == 'N' && tex_pref[1] == 'O') || (tex_pref[0] == 'S'
-			&& tex_pref[1] == 'O') || (tex_pref[0] == 'W' && tex_pref[1] == 'E')
-		|| (tex_pref[0] == 'E' && tex_pref[1] == 'A'))
-		return (tex_pref[2] == ' ');
-	return (false);
+	int	fd;
+
+	fd = map->fd;
+	if (*grid_idx == -1)
+	{
+		advance_to_next_line(current_line, line_counter, fd);
+		return (0);
+	}
+	else
+	{
+		if (between_lines_check(*current_line, line_counter, &fd))
+			return (1);
+	}
+	return (0);
 }
 
-bool	is_valid_color_str(char *color_pref)
+int	read_and_parse_file(int fd, t_map *map)
 {
-	bool	res;
-	int		comma_count;
-	int		num;
-	size_t	i;
+	char	*current_line;
+	int		line_counter;
+	int		grid_idx;
 
-	res = false;
-	i = 2;
-	comma_count = 0;
-	if ((color_pref[0] == 'F' || color_pref[0] == 'C') && color_pref[1] == ' ')
-		res = true;
-	else
-		return (false);
-	while (color_pref[i] != '\0')
+	current_line = get_next_line(fd, true);
+	if (!current_line)
+		return (handle_error(ERR_EMPTY_MAP, current_line, fd));
+	line_counter = 1;
+	grid_idx = -1;
+	while (current_line)
 	{
-		if (isdigit(color_pref[i]))
+		if (is_line_empty_or_whitespace(current_line))
 		{
-			num = 0;
-			while (isdigit(color_pref[i]))
-			{
-				num = num * 10 + (color_pref[i] - '0');
-				i++;
-			}
-			if (num < 0 || num > 255)
-				return (false);
-			if (color_pref[i] == ' ')
-				i++;
+			if (handle_empty_line(&current_line, &line_counter, map, &grid_idx))
+				return (1);
+			continue ;
 		}
-		else if (color_pref[i] == ',')
-		{
-			comma_count++;
-			if (comma_count > 2)
-				return (false);
-			if (color_pref[i + 1] == ',')
-				return (false);
-			i++;
-		}
-		else if (color_pref[i] == ' ')
-			i++;
 		else
-			return (false);
+		{
+			if (full_element_check(map, current_line, &line_counter, &grid_idx))
+				return (1);
+		}
+		advance_to_next_line(&current_line, &line_counter, fd);
 	}
-	if (comma_count != 2)
-		return (false);
-	return (res);
+	return (last_check(map, current_line, line_counter, grid_idx));
 }
